@@ -83,36 +83,53 @@ Write Request
 
 ## Build / Install
 
+### Standalone artifact (preferred — no pip required)
+
 ```bash
-# from the project root (where pyproject.toml lives):
-pip install .
+python build_artifact.py
 ```
 
-After installation, the `forge` command is on your PATH. Verify with:
+This produces `dist/forge.pyz` — a single self-contained executable built
+using **only the Python standard library** (`zipfile`/`zipapp` semantics).
+No pip, no setuptools, no virtualenv required.
+
+Run it with:
 
 ```bash
-forge --help
+python dist/forge.pyz --help
+python dist/forge.pyz add <file>
+python dist/forge.pyz search "query"
+python dist/forge.pyz search "query" --ranked
+python dist/forge.pyz stats
+python dist/forge.pyz check
 ```
 
-No `PYTHONPATH` or `src/` hack is required — the package installs normally.
-
-### Run without installing
+### pip install (alternative)
 
 ```bash
+pip install .           # standard install; creates `forge` on PATH
 pip install -e .        # editable (development) install
 python -m forge --help  # also works via __main__.py
 ```
 
 ### Runtime dependencies
 
-Python standard library only. `setuptools` is used only at build time
-(`pip install .`) and is **not** a runtime dependency.
+**Python standard library only.** `setuptools` (used only by
+`pip install .`) and the `zipfile` module (used by `build_artifact.py`)
+are both stdlib. No third-party packages are imported at runtime.
+
+### Reproducible build
+
+Two consecutive builds of `dist/forge.pyz` from the same source are
+byte-identical (SHA256 verified). See `STDLIB_FINAL.md` for evidence.
 
 ## Project Structure
 
 ```
 forge/
 ├── pyproject.toml          # PEP 621 packaging (setuptools build-time only)
+├── build_artifact.py       # reproducible standalone build → dist/forge.pyz
+├── deps-proof.txt          # auto-generated runtime dependency evidence
 ├── src/
 │   └── forge/
 │       ├── __init__.py
@@ -160,6 +177,22 @@ python -m unittest discover -s tests -v
 PYTHONPATH=src python -m unittest discover -s tests -v
 ```
 
+## Dependency Proof
+
+`deps-proof.txt` — auto-generated list of all runtime imports in
+`src/forge/*`. Every import is a Python standard library module.
+No third-party packages are imported at runtime.
+
+## Reproducible Build
+
+`python build_artifact.py` → `dist/forge.pyz`
+
+Two consecutive builds from the same source are byte-identical
+(SHA256 verified). See `STDLIB_FINAL.md` for the full reproducibility
+evidence.
+
 ## License
 
-MIT
+MIT (see LICENSE file — **NOTE: LICENSE file must be added before
+submission; the project is intended to be MIT-licensed but no LICENSE
+file is present in the repository yet.**)

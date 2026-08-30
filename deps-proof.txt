@@ -1,0 +1,60 @@
+==============================================================================
+FORGE — RUNTIME DEPENDENCY PROOF
+==============================================================================
+
+Artifact:  dist/forge.pyz
+Built:     2026-08-30
+Python:    3.14.6 (Windows)
+Method:    All non-relative imports extracted from src/forge/*.py
+
+CONCLUSION: Zero third-party runtime dependencies.
+           Every import below is part of the Python standard library.
+
+==============================================================================
+IMPORTS FOUND IN src/forge/* (excluding relative `from .` imports)
+==============================================================================
+
+from collections import Counter
+from dataclasses import dataclass, field
+from typing import Dict, List, Tuple
+from typing import Iterable, Iterator
+from typing import Iterable, List
+from typing import Iterator
+from typing import List
+from typing import List, Tuple
+from typing import Optional, Tuple
+import argparse
+import math
+import os
+import struct
+import sys
+import zlib
+
+==============================================================================
+STDLIB MODULES USED (deduplicated)
+==============================================================================
+
+Module        Purpose
+----------    ---------------------------------------------------------------
+argparse      CLI argument parsing (replaces Click/Typer)
+collections   Counter for term/document frequency
+dataclasses   Structured report objects (RecoveryReport, IndexConsistencyReport)
+math          log() for TF-IDF IDF calculation
+os            Filesystem paths, fsync, file operations
+struct        Binary record header pack/unpack
+sys           Exit codes, argv, stdout/stderr
+zlib          CRC32 checksums (replaces third-party CRC packages)
+typing        Type hints (Dict, List, Tuple, Iterable, Iterator, Optional)
+
+==============================================================================
+VERIFICATION COMMAND
+==============================================================================
+
+The list above was generated with:
+
+    Select-String -Path src/forge/*.py -Pattern '^(import|from) ' |
+        Where-Object { $_.Line -notmatch 'from \.' } |
+        ForEach-Object { $_.Line.Trim() } | Sort-Object -Unique
+
+No third-party packages appear in the output.
+==============================================================================
