@@ -4,13 +4,18 @@ A zero-dependency local data engine that persistently stores and indexes documen
 
 ## Current Status
 
-**Phase 1 — Binary records + CRC32 checksums**
+**Phase 2 — Durable WAL + storage + crash recovery**
 
-This is the first implementation phase. The following components are implemented:
+The following components are implemented:
 
 - Binary record format with fixed-size header (MAGIC, LENGTH, CHECKSUM, DOC_ID) + variable payload
 - CRC32 checksum computation and validation
 - Deterministic big-endian binary encoding
+- Durable Write-Ahead Log (WAL) with `flush()` + `os.fsync()` commit point
+- Append-only persistent document storage (source of truth)
+- Crash recovery via WAL replay (deterministic, idempotent, no forward resync)
+- Storage <-> WAL consistency validation
+- Subprocess crash-simulation test (committed write -> crash -> recovery)
 - Comprehensive test suite
 
 ## Architecture
@@ -76,11 +81,19 @@ forge/
 │   └── forge/
 │       ├── __init__.py
 │       ├── records.py      # Binary record encode/decode
-│       └── checksum.py     # CRC32 utilities
+│       ├── checksum.py     # CRC32 utilities
+│       ├── wal.py          # Durable append WAL + fsync commit point
+│       ├── storage.py      # Append-only persistent storage (source of truth)
+│       └── recovery.py     # WAL replay / crash recovery + consistency
 ├── tests/
 │   ├── __init__.py
+│   ├── crash_helper.py     # Subprocess crash simulation helper
 │   ├── test_checksum.py
-│   └── test_records.py
+│   ├── test_records.py
+│   ├── test_wal.py
+│   ├── test_storage.py
+│   ├── test_recovery.py
+│   └── test_crash.py
 ├── ARCHITECTURE.md
 ├── SCOPE_FINAL.md
 ├── WAL_FORMAT_FINAL.md

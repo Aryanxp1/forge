@@ -166,8 +166,8 @@ def parse_header(data: bytes) -> tuple[int, int, int]:
     return checksum, doc_id, length
 
 
-def read_records(stream: bytes) -> Iterator[tuple[int, bytes]]:
-    """Read multiple sequential records from a byte stream.
+def scan_records(stream: bytes) -> Iterator[tuple[int, bytes, int]]:
+    """Iterate valid records in a byte stream, yielding byte offsets.
 
     Stops at the first invalid or incomplete record.
     Does NOT attempt forward resynchronization.
@@ -176,10 +176,13 @@ def read_records(stream: bytes) -> Iterator[tuple[int, bytes]]:
         stream: Byte stream containing sequential records.
 
     Yields:
-        Tuples of (doc_id, payload) for each valid record.
+        Tuples of (doc_id, payload, offset) where offset is the byte
+        offset of the record header within the stream.
 
     Raises:
-        RecordError: If an invalid or incomplete record is encountered.
+        TruncatedRecordError: If a record header or payload is incomplete.
+        InvalidMagicError / InvalidLengthError / InvalidChecksumError:
+            If a complete record fails validation.
     """
     offset = 0
     while offset < len(stream):
@@ -201,8 +204,29 @@ def read_records(stream: bytes) -> Iterator[tuple[int, bytes]]:
         record_data = stream[offset:offset + total_record_size]
         decoded_doc_id, payload = decode_record(record_data)
 
-        yield decoded_doc_id, payload
+        yield decoded_doc_id, payload, offset
         offset += total_record_size
+
+
+def read_records(stream: bytes) -> Iterator[tuple[int, bytes]]:
+    """Read multiple sequential records from a byte stream.
+
+    Stops at the first invalid or incomplete record.
+    Does NOT attempt forward resynchronization.
+
+    Thin wrapper around scan_records that drops the byte offsets.
+
+    Args:
+        stream: Byte stream containing sequential records.
+
+    Yields:
+        Tuples of (doc_id, payload) for each valid record.
+
+    Raises:
+        RecordError: If an invalid or incomplete record is encountered.
+    """
+    for doc_id, payload, _offset in scan_records(stream):
+        yield doc_id, payload
 
 
 def record_size(payload_length: int) -> int:
