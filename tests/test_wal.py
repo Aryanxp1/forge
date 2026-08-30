@@ -127,7 +127,8 @@ class TestWalScanTailDetection(WalTestCase):
         """A complete record whose payload was changed -> corruption."""
         with WalWriter(self.wal) as w:
             w.append(1, b'first')
-        data = bytearray(open(self.wal, 'rb').read())
+        with open(self.wal, 'rb') as fh:
+            data = bytearray(fh.read())
         data[-1] ^= 0xFF  # flip a payload byte
         with open(self.wal, 'wb') as f:
             f.write(bytes(data))
@@ -151,13 +152,15 @@ class TestWalTruncate(WalTestCase):
     def test_truncate_removes_extra_bytes(self):
         with WalWriter(self.wal) as w:
             w.append(1, b'good')
-        clean = open(self.wal, 'rb').read()
+        with open(self.wal, 'rb') as fh:
+            clean = fh.read()
         tail = b'garbage tail bytes'
         with open(self.wal, 'ab') as f:
             f.write(tail)
         removed = truncate_tail(self.wal, len(clean))
         self.assertEqual(removed, len(tail))
-        self.assertEqual(open(self.wal, 'rb').read(), clean)
+        with open(self.wal, 'rb') as fh:
+            self.assertEqual(fh.read(), clean)
         self.assertEqual(scan_wal(self.wal).status, 'ok')
 
     def test_truncate_noop_when_clean(self):

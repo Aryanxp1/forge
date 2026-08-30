@@ -107,7 +107,8 @@ class TestRecoveryTailDetection(RecoveryTestCase):
         with WalWriter(self.wal) as w:
             w.append(1, b'good')
             w.append(2, b'to be corrupted')
-        data = bytearray(open(self.wal, 'rb').read())
+        with open(self.wal, 'rb') as fh:
+            data = bytearray(fh.read())
         data[-1] ^= 0xFF  # corrupt the last payload byte
         with open(self.wal, 'wb') as f:
             f.write(bytes(data))
@@ -151,7 +152,8 @@ class TestRecoveryTailDetection(RecoveryTestCase):
             w.append(1, b'good')
             w.append(2, b'corrupt this')
             w.append(3, b'after the corruption')
-        data = bytearray(open(self.wal, 'rb').read())
+        with open(self.wal, 'rb') as fh:
+            data = bytearray(fh.read())
         # flip a byte inside record 2's payload (recompute its range)
         first = len(encode_record(1, b'good'))
         second = encode_record(2, b'corrupt this')
