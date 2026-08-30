@@ -30,19 +30,44 @@ Do not fill entries just to reach a number. The bonus evidence must reflect the 
 
 ## Package Killer
 
-Target package: __________________
+Target package: **Whoosh** (pure-Python search library)
 
 Why it is a fair comparison:
-__________________________________
+Whoosh is a pure-Python full-text search and indexing library, so it sits
+in the same space as FORGE rather than being a C-extension engine. That
+makes it a fair "how much can you build with the standard library alone?"
+comparison.
 
-What we implemented:
-__________________________________
+What we implemented (FORGE's own core, no Whoosh code):
+- persistent append-only document storage with per-record CRC32 integrity
+  via `zlib.crc32`;
+- a durable Write-Ahead Log with `flush()` + `os.fsync()` commit point;
+- deterministic crash recovery by WAL replay (idempotent, no forward
+  resynchronization);
+- a hand-rolled inverted index (`term -> set of document IDs`) with
+  per-document term-frequency tracking;
+- deterministic AND/OR matching;
+- TF-IDF ranking using `math.log`;
+- storage/index consistency validation and index rebuild from storage.
 
 What we deliberately did NOT implement:
-__________________________________
+FORGE is NOT feature-equivalent to Whoosh. We did NOT implement:
+- BM25 (Whoosh's default scoring),
+- phrase, fuzzy, wildcard or prefix queries,
+- stemming / lemmatization analyzers,
+- incremental index updates (Whoosh supports delete/update),
+- N-gram / per-field analyzers,
+- index segments, commit/merge policies,
+- a query-parser language (FORGE uses simple AND/OR + a `--ranked` flag).
+
+FORGE does not claim to replace Whoosh. It demonstrates that a
+meaningful, crash-safe subset — durable storage + inverted index +
+deterministic search/ranking — can be built with the Python standard
+library alone.
 
 Evidence of real-world usage/downloads:
-__________________________________
+No download or usage statistics are claimed, and none are fabricated.
+This section is intentionally left without numbers.
 
 ## Reproducible build
 

@@ -1,6 +1,14 @@
 # FORGE
 
-A zero-dependency local data engine that persistently stores and indexes documents for fast ranked search, detects data corruption through integrity checks, and automatically recovers committed data after crashes.
+### A crash-safe local document search engine — built with Python's standard library only.
+
+**Track D — Zero-Dependency Local Data Engine**
+
+FORGE stores documents durably, survives interrupted writes, rebuilds its
+search index from source-of-truth storage, and provides deterministic
+AND/OR + TF-IDF search.
+
+**Zero runtime dependencies. No pip required. One-command reproducible build.**
 
 ## Current Status
 
@@ -24,7 +32,7 @@ All Tier 1 + Tier 2 features are implemented, tested, and packaged:
 - Storage <-> index consistency validation (independent reference; detects missing/extra docs, postings, term frequencies)
 - Command-line interface (`forge {add,index,search,stats,check}`, installable via `pip install .`)
 - PEP 621 packaging (`pyproject.toml`) — `setuptools` build-time only, no runtime dependencies
-- 249 passing tests (including 2 subprocess crash tests)
+- 254 passing tests (including 2 subprocess crash tests)
 
 ## Architecture
 
@@ -83,17 +91,16 @@ Write Request
 
 ## Build / Install
 
-### Standalone artifact (preferred — no pip required)
+### Official submission artifact — `dist/forge.pyz`
 
 ```bash
 python build_artifact.py
 ```
 
-This produces `dist/forge.pyz` — a single self-contained executable built
-using **only the Python standard library** (`zipfile`/`zipapp` semantics).
-No pip, no setuptools, no virtualenv required.
-
-Run it with:
+This is the **official submission artifact**: a single self-contained
+executable built with **only the Python standard library** (`zipfile` /
+zipapp semantics). It requires **no pip, no setuptools, no virtualenv,
+no PYTHONPATH** — only Python 3.9+.
 
 ```bash
 python dist/forge.pyz --help
@@ -104,7 +111,9 @@ python dist/forge.pyz stats
 python dist/forge.pyz check
 ```
 
-### pip install (alternative)
+### Optional Development Install
+
+For local development only; not needed to run the official artifact:
 
 ```bash
 pip install .           # standard install; creates `forge` on PATH
@@ -114,22 +123,26 @@ python -m forge --help  # also works via __main__.py
 
 ### Runtime dependencies
 
-**Python standard library only.** `setuptools` (used only by
-`pip install .`) and the `zipfile` module (used by `build_artifact.py`)
-are both stdlib. No third-party packages are imported at runtime.
+**Python standard library only.** No third-party packages are imported at
+runtime. `setuptools` is used only by the optional `pip install .` path;
+the official `dist/forge.pyz` artifact does not use it.
 
 ### Reproducible build
 
 Two consecutive builds of `dist/forge.pyz` from the same source are
-byte-identical (SHA256 verified). See `STDLIB_FINAL.md` for evidence.
+byte-identical (SHA256 verified). See `STDLIB.md` for evidence.
 
 ## Project Structure
 
 ```
 forge/
-├── pyproject.toml          # PEP 621 packaging (setuptools build-time only)
-├── build_artifact.py       # reproducible standalone build → dist/forge.pyz
+├── LICENSE                 # OSI-approved MIT license
+├── README.md               # this file
+├── DEMO.md                 # 5-minute judge demo script
+├── STDLIB.md               # standard-library substitution log
 ├── deps-proof.txt          # auto-generated runtime dependency evidence
+├── build_artifact.py       # reproducible standalone build → dist/forge.pyz
+├── pyproject.toml          # optional dev packaging (setuptools build-time only)
 ├── src/
 │   └── forge/
 │       ├── __init__.py
@@ -163,7 +176,6 @@ forge/
 ├── ARCHITECTURE.md
 ├── SCOPE_FINAL.md
 ├── WAL_FORMAT_FINAL.md
-├── STDLIB_FINAL.md
 └── README.md
 ```
 
@@ -188,11 +200,22 @@ No third-party packages are imported at runtime.
 `python build_artifact.py` → `dist/forge.pyz`
 
 Two consecutive builds from the same source are byte-identical
-(SHA256 verified). See `STDLIB_FINAL.md` for the full reproducibility
+(SHA256 verified). See `STDLIB.md` for the full reproducibility
 evidence.
+
+## Limitations
+
+- No phrase search.
+- No fuzzy search.
+- No stemming or lemmatization.
+- No BM25 ranking (TF-IDF only).
+- No persistent search index — the index is derived data and is rebuilt
+  from storage on each invocation.
+- Add-only storage: documents are immutable in V1 (no update/delete).
+- Requires Python 3.9+.
+- Cross-platform behavior was only tested on Windows; POSIX is expected
+  to work but was not formally verified.
 
 ## License
 
-MIT (see LICENSE file — **NOTE: LICENSE file must be added before
-submission; the project is intended to be MIT-licensed but no LICENSE
-file is present in the repository yet.**)
+MIT — see [LICENSE](LICENSE).
