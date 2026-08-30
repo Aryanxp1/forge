@@ -1,0 +1,1 @@
+Local databases store data on the same machine without a network. An append only storage file keeps records simple and fast. Documents are immutable and never change once committed.

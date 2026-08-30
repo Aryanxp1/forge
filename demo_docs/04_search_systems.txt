@@ -1,0 +1,1 @@
+Search engines match query terms against an inverted index. Ranking decides which documents appear first. A good search system returns relevant results quickly.

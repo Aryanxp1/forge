@@ -1,0 +1,1 @@
+Building a search engine with only the Python standard library is surprisingly practical. No external packages are required at runtime. The standard library provides argparse, crc32, and struct for the whole project.

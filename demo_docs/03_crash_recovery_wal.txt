@@ -1,0 +1,1 @@
+The write ahead log protects committed data during a crash. Every record is written to the wal, then fsync makes it durable. On restart the engine replays the wal and recovers committed records into storage.
