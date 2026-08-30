@@ -4,9 +4,9 @@ A zero-dependency local data engine that persistently stores and indexes documen
 
 ## Current Status
 
-**Phase 5 — Index rebuild and consistency validation**
+**V1 Complete — Reproducible Python packaging**
 
-The following components are implemented:
+All Tier 1 + Tier 2 features are implemented, tested, and packaged:
 
 - Binary record format with fixed-size header (MAGIC, LENGTH, CHECKSUM, DOC_ID) + variable payload
 - CRC32 checksum computation and validation
@@ -18,11 +18,13 @@ The following components are implemented:
 - Subprocess crash-simulation test (committed write -> crash -> recovery)
 - Deterministic V1 tokenizer (lowercase, split on non-alphanumerics, basic stopword removal, Unicode-safe)
 - In-memory derived inverted index (`term -> set of doc IDs`, rebuildable from storage)
-- AND / OR query evaluation with deterministic results (sorted by document ID)
+- AND / OR query evaluation with deterministic results
+- TF-IDF ranking (`--ranked` flag) with deterministic tie-breaking
 - Index rebuild from storage (derived index, always reconstructible from records)
 - Storage <-> index consistency validation (independent reference; detects missing/extra docs, postings, term frequencies)
-- Command-line interface (`python -m forge {add,index,search,stats,check}`)
-- Comprehensive test suite
+- Command-line interface (`forge {add,index,search,stats,check}`, installable via `pip install .`)
+- PEP 621 packaging (`pyproject.toml`) — `setuptools` build-time only, no runtime dependencies
+- 249 passing tests (including 2 subprocess crash tests)
 
 ## Architecture
 
@@ -76,16 +78,46 @@ Write Request
 
 ## Requirements
 
-- Python 3.8+
-- No external dependencies (standard library only)
+- Python 3.9+
+- No external dependencies (standard library only at runtime)
+
+## Build / Install
+
+```bash
+# from the project root (where pyproject.toml lives):
+pip install .
+```
+
+After installation, the `forge` command is on your PATH. Verify with:
+
+```bash
+forge --help
+```
+
+No `PYTHONPATH` or `src/` hack is required — the package installs normally.
+
+### Run without installing
+
+```bash
+pip install -e .        # editable (development) install
+python -m forge --help  # also works via __main__.py
+```
+
+### Runtime dependencies
+
+Python standard library only. `setuptools` is used only at build time
+(`pip install .`) and is **not** a runtime dependency.
 
 ## Project Structure
 
 ```
 forge/
+├── pyproject.toml          # PEP 621 packaging (setuptools build-time only)
 ├── src/
 │   └── forge/
 │       ├── __init__.py
+│       ├── __main__.py     # enables `python -m forge`
+│       ├── cli.py          # command-line interface (add/index/search/stats/check)
 │       ├── records.py      # Binary record encode/decode
 │       ├── checksum.py     # CRC32 utilities
 │       ├── wal.py          # Durable append WAL + fsync commit point
@@ -94,7 +126,8 @@ forge/
 │       ├── tokenizer.py    # Deterministic V1 tokenizer
 │       ├── index.py        # In-memory derived inverted index
 │       ├── search.py       # AND / OR query evaluation
-│       └── consistency.py    # rebuild + storage<->index validation
+│       ├── ranking.py      # TF-IDF scoring + ranking
+│       └── consistency.py  # rebuild + storage<->index validation
 ├── tests/
 │   ├── __init__.py
 │   ├── crash_helper.py     # Subprocess crash simulation helper
@@ -107,7 +140,9 @@ forge/
 │   ├── test_tokenizer.py
 │   ├── test_index.py
 │   ├── test_search.py
-│   └── test_consistency.py
+│   ├── test_ranking.py
+│   ├── test_consistency.py
+│   └── test_cli.py
 ├── ARCHITECTURE.md
 ├── SCOPE_FINAL.md
 ├── WAL_FORMAT_FINAL.md
@@ -117,14 +152,12 @@ forge/
 
 ## Running Tests
 
-The `forge` package lives under `src/`, so the source tree must be on `PYTHONPATH`:
-
 ```bash
-# POSIX (bash/zsh)
-PYTHONPATH=src python -m unittest discover -s tests -v
+# After `pip install .` (or `pip install -e .`):
+python -m unittest discover -s tests -v
 
-# Windows (PowerShell)
-$env:PYTHONPATH = 'src'; python -m unittest discover -s tests -v
+# Without installing (development only):
+PYTHONPATH=src python -m unittest discover -s tests -v
 ```
 
 ## License

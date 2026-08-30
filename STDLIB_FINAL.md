@@ -45,17 +45,22 @@ __________________________________
 
 Build command:
 ```text
-__________________________________
+pip install .
 ```
 
 Clean environment:
 ```text
-__________________________________
+Python 3.9+ on PATH, no PYTHONPATH required
 ```
 
 Build/run verification:
 ```text
-__________________________________
+forge --help
+forge add <file>
+forge search "query"
+forge search "query" --ranked
+forge stats
+forge check
 ```
 
 ## Dependency proof
@@ -64,5 +69,10 @@ Final runtime dependency list:
 ```text
 Python standard library only
 ```
+
+`setuptools` is a build-time tool only (declared in `pyproject.toml`'s
+`build-system.requires`). It is NOT imported at runtime. After
+`pip install .`, the installed `forge` package imports nothing outside
+the standard library.
 
 Verify using a clean environment before submission.
