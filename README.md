@@ -4,7 +4,7 @@ A zero-dependency local data engine that persistently stores and indexes documen
 
 ## Current Status
 
-**Phase 3 — Tokenizer + inverted index**
+**Phase 4 — AND/OR search**
 
 The following components are implemented:
 
@@ -18,6 +18,7 @@ The following components are implemented:
 - Subprocess crash-simulation test (committed write -> crash -> recovery)
 - Deterministic V1 tokenizer (lowercase, split on non-alphanumerics, basic stopword removal, Unicode-safe)
 - In-memory derived inverted index (`term -> set of doc IDs`, rebuildable from storage)
+- AND / OR query evaluation with deterministic results (sorted by document ID)
 - Comprehensive test suite
 
 ## Architecture
@@ -88,7 +89,8 @@ forge/
 │       ├── storage.py      # Append-only persistent storage (source of truth)
 │       ├── recovery.py     # WAL replay / crash recovery + consistency
 │       ├── tokenizer.py    # Deterministic V1 tokenizer
-│       └── index.py        # In-memory derived inverted index
+│       ├── index.py        # In-memory derived inverted index
+│       └── search.py       # AND / OR query evaluation
 ├── tests/
 │   ├── __init__.py
 │   ├── crash_helper.py     # Subprocess crash simulation helper
@@ -99,7 +101,8 @@ forge/
 │   ├── test_recovery.py
 │   ├── test_crash.py
 │   ├── test_tokenizer.py
-│   └── test_index.py
+│   ├── test_index.py
+│   └── test_search.py
 ├── ARCHITECTURE.md
 ├── SCOPE_FINAL.md
 ├── WAL_FORMAT_FINAL.md
