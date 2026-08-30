@@ -26,6 +26,22 @@ class CliTestCase(unittest.TestCase):
         """Invoke the CLI in-process and return its exit code."""
         return main(["--data-dir", self.data_dir, *argv])
 
+    def _run_capture(self, *argv):
+        """Invoke the CLI in-process, capturing stdout.
+
+        Returns (exit_code, stdout_text).
+        """
+        import sys
+        from io import StringIO
+        old_out = sys.stdout
+        buf = StringIO()
+        sys.stdout = buf
+        try:
+            code = main(["--data-dir", self.data_dir, *argv])
+        finally:
+            sys.stdout = old_out
+        return code, buf.getvalue()
+
     def _docs(self, count):
         """Write `count` numbered doc files and add each via the CLI."""
         for i in range(count):
@@ -122,6 +138,85 @@ class CliTestCase(unittest.TestCase):
             self.assertEqual(main(["--help"]), 0)
         finally:
             sys.stdout = old_out
+
+    # ------------------------------------------------------------ ranked search
+    def _add(self, name, text):
+        """Write a doc file and add it; return the CLI exit code."""
+        p = os.path.join(self.data_dir, name)
+        with open(p, "w", encoding="utf-8") as fh:
+            fh.write(text)
+        return self._run("add", p)
+
+    def test_ranked_flag_returns_0(self):
+        self.assertEqual(self._add("a.txt", "python search engine"), 0)
+        code, out = self._run_capture("search", "python", "--ranked")
+        self.assertEqual(code, 0)
+        self.assertIn("ranked", out)
+        self.assertIn("Score", out)
+
+    def test_ranked_and_shows_scores(self):
+        self._add("a.txt", "python search engine")
+        self._add("b.txt", "python language")
+        code, out = self._run_capture("search", "python search", "--ranked")
+        self.assertEqual(code, 0)
+        # Score column header present and at least one numeric score
+        self.assertIn("Score", out)
+        self.assertRegex(out, r"\d+\s+\d+\.\d+\s+doc\s+\d+")
+
+    def test_ranked_or_mode(self):
+        self._add("a.txt", "python search engine")
+        self._add("b.txt", "storage basics")
+        code, out = self._run_capture(
+            "search", "python storage", "--or", "--ranked"
+        )
+        self.assertEqual(code, 0)
+        self.assertIn("OR ranked", out)
+        self.assertIn("Score", out)
+
+    def test_ranked_tie_break_by_doc_id(self):
+        # Two docs with identical single-term content -> equal scores.
+        # Lower doc ID must appear first (deterministic tie-breaker).
+        self._add("a.txt", "python")
+        self._add("b.txt", "python")
+        code, out = self._run_capture("search", "python", "--ranked")
+        self.assertEqual(code, 0)
+        lines = [ln for ln in out.splitlines() if ln.strip()]
+        # Find the two result lines (after the header) and check doc order
+        doc_lines = [ln for ln in lines if "doc" in ln and "Score" not in ln]
+        self.assertGreaterEqual(len(doc_lines), 2)
+        ids = []
+        for ln in doc_lines[:2]:
+            ids.append(int(ln.strip().split("doc")[1].split(":")[0].strip()))
+        self.assertEqual(ids, sorted(ids))
+
+    def test_unranked_search_unchanged(self):
+        """Existing default search output must NOT contain 'Score'."""
+        self._add("a.txt", "python search engine")
+        code, out = self._run_capture("search", "python search")
+        self.assertEqual(code, 0)
+        self.assertIn("AND results", out)
+        self.assertNotIn("Score", out)
+        self.assertNotIn("ranked", out)
+
+    def test_ranked_unknown_query(self):
+        self._add("a.txt", "python search")
+        code, out = self._run_capture("search", "nonexistent", "--ranked")
+        self.assertEqual(code, 0)
+        self.assertIn("(no matches)", out)
+
+    def test_ranked_empty_query(self):
+        self._add("a.txt", "python search")
+        code, out = self._run_capture("search", "", "--ranked")
+        self.assertEqual(code, 0)
+        self.assertIn("(no matches)", out)
+
+    def test_ranked_empty_and_unranked_empty_match(self):
+        """Ranked and unranked both return (no matches) for empty query."""
+        self._add("a.txt", "python search")
+        _, ranked_out = self._run_capture("search", "", "--ranked")
+        _, plain_out = self._run_capture("search", "")
+        self.assertIn("(no matches)", ranked_out)
+        self.assertIn("(no matches)", plain_out)
 
 
 if __name__ == "__main__":

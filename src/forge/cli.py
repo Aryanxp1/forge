@@ -37,6 +37,8 @@ from .wal import WalWriter, scan_wal
 from .recovery import recover
 from .consistency import rebuild_index, validate_consistency, IndexConsistencyReport
 from .search import search, MODE_AND, MODE_OR
+from .ranking import search_ranked, score_document
+from .tokenizer import tokenize
 
 DEFAULT_DATA_DIR = os.path.join(os.getcwd(), "forge_data")
 STORAGE_FILE = "forge.db"
@@ -159,7 +161,11 @@ def cmd_index(args: argparse.Namespace) -> int:
 
 
 def cmd_search(args: argparse.Namespace) -> int:
-    """Search indexed documents (AND by default; -o for OR)."""
+    """Search indexed documents (AND by default; -o for OR).
+
+    With --ranked, results are ordered by descending TF-IDF score with
+    document ID as the tie-breaker, and a score column is shown.
+    """
     data_dir = args.data_dir
     store_path, _, _ = _paths(data_dir)
     if not os.path.exists(store_path):
@@ -167,8 +173,29 @@ def cmd_search(args: argparse.Namespace) -> int:
         return 1
     index = _load_index(data_dir)
     mode = MODE_OR if args.or_mode else MODE_AND
-    results = search(index, args.query, mode=mode)
     op = "OR" if mode == MODE_OR else "AND"
+
+    if args.ranked:
+        results = search_ranked(index, args.query, mode=mode)
+        print(f"{op} ranked results for: {args.query!r}")
+        if not results:
+            print("  (no matches)")
+            return 0
+        terms = tokenize(args.query)
+        print(f"  {'Rank':<6}{'Score':<12}Document")
+        with Storage(store_path) as storage:
+            for rank, doc_id in enumerate(results, 1):
+                score = score_document(index, doc_id, terms)
+                try:
+                    payload = storage.get(doc_id)
+                except StorageError:
+                    payload = b""
+                preview = payload.decode("utf-8", errors="replace")[:80]
+                print(f"  {rank:<6}{score:<12.4f}doc {doc_id}: {preview}")
+        return 0
+
+    # Unranked path (default): deterministic doc-ID order, unchanged.
+    results = search(index, args.query, mode=mode)
     print(f"{op} results for: {args.query!r}")
     if not results:
         print("  (no matches)")
@@ -182,6 +209,7 @@ def cmd_search(args: argparse.Namespace) -> int:
                 preview = payload.decode("utf-8", errors="replace")[:120]
                 print(f"  doc {doc_id}: {preview}")
     return 0
+
 
 
 def cmd_stats(args: argparse.Namespace) -> int:
@@ -283,6 +311,11 @@ def build_parser() -> argparse.ArgumentParser:
         dest="or_mode",
         action="store_true",
         help="use OR semantics instead of the default AND",
+    )
+    p_search.add_argument(
+        "--ranked",
+        action="store_true",
+        help="rank results by TF-IDF score (higher is better)",
     )
     p_search.set_defaults(func=cmd_search)
 
