@@ -4,7 +4,7 @@ A zero-dependency local data engine that persistently stores and indexes documen
 
 ## Current Status
 
-**Phase 2 — Durable WAL + storage + crash recovery**
+**Phase 3 — Tokenizer + inverted index**
 
 The following components are implemented:
 
@@ -16,6 +16,8 @@ The following components are implemented:
 - Crash recovery via WAL replay (deterministic, idempotent, no forward resync)
 - Storage <-> WAL consistency validation
 - Subprocess crash-simulation test (committed write -> crash -> recovery)
+- Deterministic V1 tokenizer (lowercase, split on non-alphanumerics, basic stopword removal, Unicode-safe)
+- In-memory derived inverted index (`term -> set of doc IDs`, rebuildable from storage)
 - Comprehensive test suite
 
 ## Architecture
@@ -84,7 +86,9 @@ forge/
 │       ├── checksum.py     # CRC32 utilities
 │       ├── wal.py          # Durable append WAL + fsync commit point
 │       ├── storage.py      # Append-only persistent storage (source of truth)
-│       └── recovery.py     # WAL replay / crash recovery + consistency
+│       ├── recovery.py     # WAL replay / crash recovery + consistency
+│       ├── tokenizer.py    # Deterministic V1 tokenizer
+│       └── index.py        # In-memory derived inverted index
 ├── tests/
 │   ├── __init__.py
 │   ├── crash_helper.py     # Subprocess crash simulation helper
@@ -93,7 +97,9 @@ forge/
 │   ├── test_wal.py
 │   ├── test_storage.py
 │   ├── test_recovery.py
-│   └── test_crash.py
+│   ├── test_crash.py
+│   ├── test_tokenizer.py
+│   └── test_index.py
 ├── ARCHITECTURE.md
 ├── SCOPE_FINAL.md
 ├── WAL_FORMAT_FINAL.md
