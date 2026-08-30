@@ -21,6 +21,7 @@ The following components are implemented:
 - AND / OR query evaluation with deterministic results (sorted by document ID)
 - Index rebuild from storage (derived index, always reconstructible from records)
 - Storage <-> index consistency validation (independent reference; detects missing/extra docs, postings, term frequencies)
+- Command-line interface (`python -m forge {add,index,search,stats,check}`)
 - Comprehensive test suite
 
 ## Architecture
