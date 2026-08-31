@@ -100,6 +100,20 @@ This starts a child process. tests/crash_helper.py:
 3. the parent replays the WAL and asserts the committed document is
    recovered — with `validate_consistency` passing in both cases.
 
+### Optional — GUI (if time remains / live display available)
+
+The same engine can be shown through an **optional** desktop GUI:
+
+```powershell
+python forge_gui.py --data-dir $D
+```
+
+The GUI offers the documents list, AND/OR toggle, TF-IDF ranked search with
+scores, live statistics and the consistency check. It is **optional**: it is
+built with Python standard-library `tkinter`/`ttk` plus the existing FORGE
+modules, and is **not** part of the official `dist/forge.pyz` submission
+artifact. The CLI demo above is the official path.
+
 ---
 
 ## What to show the judge
@@ -115,3 +129,6 @@ This starts a child process. tests/crash_helper.py:
   recovers every committed document via WAL replay.
 - **Ranked search** — `python dist/forge.pyz search "…" --ranked`
   displays deterministic TF-IDF scores and doc-ID tie-breaking.
+- **Optional GUI** — `forge_gui.py` (tkinter/ttk, stdlib only) shows the
+  same add/search/rank/stats/check through a desktop UI; not part of
+  `dist/forge.pyz`.

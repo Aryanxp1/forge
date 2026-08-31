@@ -25,6 +25,7 @@ No entry is invented to reach a count.
 | 10 | PyInstaller / Nuitka | `zipapp` (stdlib) | Standalone artifact | `build_artifact.py` → `dist/forge.pyz`, runs with `python dist/forge.pyz` |
 | 11 | NLTK / spaCy | built-in `str` methods | Tokenization | `forge.tokenizer` — lowercase, split on non-alphanumerics, stopword removal |
 | 12 | ctypes / struct-lib | `struct` | Record encoding | `forge.records` — big-endian pack/unpack of fixed-size binary headers |
+| 13 | PyQt / PySide / Electron | `tkinter` / `ttk` (stdlib) | Optional GUI front end | `forge_gui.py` — tkinter/ttk view over the existing FORGE core; stdlib only, NOT included in `dist/forge.pyz` |
 
 Do not fill entries just to reach a number. The bonus evidence must reflect the actual implementation.
 
@@ -94,6 +95,11 @@ python dist/forge.pyz search "query" --ranked
 python dist/forge.pyz stats
 python dist/forge.pyz check
 ```
+
+The **optional** desktop GUI (`forge_gui.py`) is NOT packaged into the
+artifact: `build_artifact.py` packages only `src/forge/*`. The GUI uses only
+standard-library `tkinter`/`ttk` plus the existing FORGE modules, so the
+official zero-dependency artifact remains `dist/forge.pyz`.
 
 ### Reproducibility evidence
 

@@ -132,6 +132,27 @@ the official `dist/forge.pyz` artifact does not use it.
 Two consecutive builds of `dist/forge.pyz` from the same source are
 byte-identical (SHA256 verified). See `STDLIB.md` for evidence.
 
+## Optional GUI
+
+`forge_gui.py` at the repository root provides an **optional** desktop GUI
+for FORGE:
+
+- **Optional only** — the CLI and the official `dist/forge.pyz` artifact are
+  unaffected by its presence or absence.
+- **Standard library only** — it is a thin `tkinter`/`ttk` view over the
+  existing FORGE modules (storage, WAL, tokenizer, index, search, ranking,
+  consistency). No third-party framework is used and no engine logic is
+  duplicated.
+- **NOT part of the official submission artifact** — `forge_gui.py` is not
+  packaged into `dist/forge.pyz`. The official zero-dependency submission
+  artifact remains `dist/forge.pyz`, built with `python build_artifact.py`.
+
+Run it from the repository root:
+
+```bash
+python forge_gui.py [--data-dir DIR]
+```
+
 ## Project Structure
 
 ```
@@ -143,6 +164,7 @@ forge/
 ├── deps-proof.txt          # auto-generated runtime dependency evidence
 ├── build_artifact.py       # reproducible standalone build → dist/forge.pyz
 ├── pyproject.toml          # optional dev packaging (setuptools build-time only)
+├── forge_gui.py            # OPTIONAL GUI front end (tkinter/ttk, stdlib only; not in dist/forge.pyz)
 ├── src/
 │   └── forge/
 │       ├── __init__.py
