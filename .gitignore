@@ -29,6 +29,7 @@ htmlcov/
 Thumbs.db
 
 # FORGE runtime data (future phases)
+forge_data/
 *.wal
 *.db
 data/
